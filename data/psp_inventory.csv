@@ -1,0 +1,30 @@
+code,name,region,markets,category,api_status,docs_url,connector,notes
+5pay,5 Pay,Southeast Asia,MY;ID;TH;VN;HK;USDT,Bank / QR / E-wallet,docs_needed,,,MSB; USDT to fiat 0.8%
+ompay,OM Pay,Southeast Asia;Crypto,MY;ID;TH;VN;SG;USDT,Bank / QR / Crypto,docs_needed,,,
+payme,Long77Pay (Payme),Southeast Asia,VN;LA,Bank / QR,docs_needed,,,
+proxpay,Proxpay,Southeast Asia,MY;TH,Bank / QR,docs_needed,,,
+monetix,Monetix,Southeast Asia;Mena,MY;VN;LA;PK,Bank / E-wallet,docs_needed,,,Ask whether their gate API exposes order list + balance
+acerpay,Acerpay,Southeast Asia;Mena;Latam,HK;IN;BR,Bank / UPI / PIX,docs_needed,,,
+pay247,Pay247,Southeast Asia;Mena,,Bank / QR,docs_received,https://docs.pay247.io,pending,Docs link received; site blocked from dev env so connector not written yet
+payexchina,Payexchina,China,CN,Alipay / WeChat / UnionPay,docs_needed,,,
+uenjoy,uEnjoy,China,CN,Alipay / WeChat / UnionPay,docs_needed,,,
+nowpay,Now Pay,China,CN,Alipay / WeChat / UnionPay,docs_needed,,,
+chippay,ChipPay,China;Crypto,CN;USDT,Alipay / WeChat / UnionPay / Crypto,docs_needed,,,
+bipipay,Bipi Pay,China,CN,Alipay / WeChat,docs_needed,,,
+picotop,Picotop,China,CN,P2P / Alipay,docs_needed,,,
+nepay,NEPay,China,CN,P2P / Alipay,docs_needed,,,
+mtpay,MT Pay,China,CN,,docs_needed,,,
+ibitpay,IBit Pay,China,CN,,docs_needed,,,
+gelink,Ge-link,China,CN,,docs_needed,,,
+letknow,Letknow Pay,Crypto,USDT;BTC;ETH,Crypto,docs_received,https://apidocs.letknow.com/,pending,Docs link received; site blocked from dev env so connector not written yet
+korapay,Kora Pay,Africa,GH;KE;NG;ZA;XAF;XOF,Bank / Mobile money / Card,public_docs,https://developers.korapay.com,,Public API docs; need merchant secret key
+paystack,PayStack,Africa,NG,Card / Bank / Transfer,public_docs,https://paystack.com/docs/api/,paystack,Connector written (transactions + transfers + balance + settlements); need secret key to test
+lipad,Lipad,Africa,KE;TZ;UG,Mobile money (M-Pesa / Airtel),docs_received,https://developer.lipad.io/,lipad,Connector from official SDK: status query only; ask for list / balance / settlement API
+kuwa,Kuwa,Africa,,,docs_needed,,,
+paysnapper,Paysnapper,Africa,,,docs_needed,,,
+tarspay,Tarspay,Mena;Latam,MX;BD,Bank SPEI,docs_needed,,,
+unitedpay,Unitedpay,Mena,EG,,docs_needed,,,
+payok,Payok,Mena;Latam,TR;IN;BR;CO,Papara / UPI / PIX,docs_needed,,,
+starpago,Starpago,Latam,MX;BR;CO;PE,SPEI / OXXO / PIX,docs_needed,,,
+cheezeepay,CheezeePay,Mena,IN,UPI / IMPS,docs_needed,,,Marked pending in sheet
+trustpay,Trust Payments,Europe,EU,Card,public_docs,https://help.trustpayments.com,,Card acquirer; transaction query via Webservices API; need site reference + user

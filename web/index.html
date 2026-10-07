@@ -1,0 +1,826 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>PSP &amp; CRM Ops Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: app shell — top bar with global filters, tab strip, one working view per tab; screen board is a dark full-viewport overlay */
+:root{
+  --bg:#f4f6f7; --surface:#ffffff; --surface-2:#eef1f3; --ink:#111820; --ink-2:#4a5562; --muted:#77818d; --line:#dde2e6;
+  --accent:#0d6c68; --accent-ink:#ffffff; --accent-soft:#dff0ee;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300;
+  --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b;
+  --grid:#e7eaed;
+  --f-display:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-data:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1316; --surface:#171c20; --surface-2:#1f262b; --ink:#eef2f4; --ink-2:#b4bec6; --muted:#86919b; --line:#2a3238;
+  --accent:#43b9b2; --accent-ink:#071513; --accent-soft:#163331;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300;
+  --grid:#242b30; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1316; --surface:#171c20; --surface-2:#1f262b; --ink:#eef2f4; --ink-2:#b4bec6; --muted:#86919b; --line:#2a3238;
+  --accent:#43b9b2; --accent-ink:#071513; --accent-soft:#163331;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300;
+  --grid:#242b30; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--f-data);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.wrap{max-width:1360px;margin:0 auto;padding-inline:20px;padding-block:0 48px}
+@media (max-width:600px){.wrap{padding-inline:16px}}
+
+/* top bar */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding-block:18px 14px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0;margin-right:auto}
+.mark{width:34px;height:34px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex:none}
+.mark svg{display:block}
+.brand h1{font-family:var(--f-display);font-size:19px;font-weight:700;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.brand p{margin:0;color:var(--muted);font-size:12.5px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);padding:8px 13px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.small{padding:5px 9px;font-size:12px}
+.btn svg{flex:none}
+
+/* filters */
+.filters{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:10px 0 14px;border-bottom:1px solid var(--line)}
+.flabel{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:8px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px 4px 8px;font-size:12.5px;cursor:pointer;color:var(--ink-2)}
+.chip[aria-pressed="false"]{opacity:.5;background:transparent}
+.chip[aria-pressed="false"] .dot{background:transparent!important;box-shadow:inset 0 0 0 1.5px var(--muted)}
+.dt{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);font-weight:600}
+.dt input{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:5px 8px;font-family:var(--f-data);font-size:12.5px;color:var(--ink);min-width:0}
+.dlrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+tr.tot td{font-weight:600;border-top:1px solid var(--line);background:var(--surface-2)}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
+.fgroup{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* tabs */
+.tabs{display:flex;gap:4px;overflow-x:auto;padding-top:14px;scrollbar-width:none}
+.tabs button{border:0;background:transparent;padding:9px 14px;border-radius:8px 8px 0 0;cursor:pointer;font-weight:600;color:var(--muted);white-space:nowrap;border-bottom:2px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button .cnt{font-family:var(--f-data);font-size:11px;background:var(--surface-2);border-radius:999px;padding:1px 6px;margin-left:5px;color:var(--ink-2)}
+.view{padding-top:18px;display:grid;gap:16px}
+
+/* panels */
+.grid{display:grid;gap:16px;grid-template-columns:repeat(12,minmax(0,1fr))}
+.c12{grid-column:span 12}.c8{grid-column:span 8}.c7{grid-column:span 7}.c6{grid-column:span 6}.c5{grid-column:span 5}.c4{grid-column:span 4}
+@media (max-width:1000px){.c8,.c7,.c6,.c5,.c4{grid-column:span 12}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;min-width:0}
+.ph{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.ph h2{font-family:var(--f-display);font-size:15px;font-weight:650;margin:0;letter-spacing:-.005em}
+.ph .sub{color:var(--muted);font-size:12.5px}
+.note{color:var(--muted);font-size:12.5px;margin:0}
+
+/* KPI row */
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--surface);padding:14px 16px;min-width:0}
+.kpi .k{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font-family:var(--f-data);font-variant-numeric:tabular-nums;font-size:24px;font-weight:600;margin-top:4px;letter-spacing:-.02em;white-space:nowrap}
+.kpi .d{font-size:12px;color:var(--ink-2);margin-top:2px}
+.up::before{content:"▲ ";font-size:9px}.down::before{content:"▼ ";font-size:9px}
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.swl{width:14px;height:3px;border-radius:2px;display:inline-block}
+
+/* svg charts */
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;overflow:visible}
+.axis text{fill:var(--muted);font-family:var(--f-data);font-size:10.5px}
+.gridl{stroke:var(--grid);stroke-width:1}
+.tip{position:fixed;z-index:60;pointer-events:none;background:var(--surface);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.14);border-radius:8px;padding:8px 10px;font-size:12px;min-width:150px;opacity:0;transition:opacity .08s}
+.tip .t{font-weight:600;margin-bottom:4px}
+.tip .r{display:flex;align-items:center;gap:7px;justify-content:space-between}
+.tip .r span:first-child{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
+
+/* hbars */
+.hbars{display:grid;gap:9px}
+.hb{display:grid;grid-template-columns:150px minmax(0,1fr) 84px;align-items:center;gap:10px;cursor:default}
+@media (max-width:560px){.hb{grid-template-columns:100px minmax(0,1fr) 72px}}
+.hb .l{display:flex;align-items:center;gap:7px;min-width:0;font-size:13px}
+.hb .l span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb .track{height:16px;position:relative}
+.hb .bar{height:100%;border-radius:0 4px 4px 0;background:var(--s1)}
+.hb .val{text-align:right;font-size:12.5px}
+.share{display:flex;height:22px;gap:2px;border-radius:4px;overflow:hidden;margin:4px 0 12px}
+.share div{height:100%}
+
+/* tables */
+.tw{overflow-x:auto;margin:0 -18px;padding:0 18px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:var(--ink)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+#pspTable th{white-space:normal;vertical-align:bottom;line-height:1.3}
+#pspTable td{padding-inline:8px}
+td.r,th.r{text-align:right}
+tbody tr:hover td{background:var(--surface-2)}
+.namecell{display:flex;align-items:center;gap:8px;font-weight:600}
+.mutedtxt{color:var(--muted);font-size:12px}
+
+/* status pills: color + icon + label */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 8px 2px 6px;border-radius:999px;white-space:nowrap;color:var(--ink)}
+.pill i{font-style:normal;width:14px;height:14px;border-radius:50%;display:inline-grid;place-items:center;font-size:9px;color:#fff;font-weight:700}
+.pill.good{background:color-mix(in srgb,var(--good) 16%,transparent)}.pill.good i{background:var(--good)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 22%,transparent)}.pill.warn i{background:var(--warn);color:#2a1d00}
+.pill.serious{background:color-mix(in srgb,var(--serious) 20%,transparent)}.pill.serious i{background:var(--serious)}
+.pill.crit{background:color-mix(in srgb,var(--crit) 17%,transparent)}.pill.crit i{background:var(--crit)}
+.pill.neutral{background:var(--surface-2);color:var(--ink-2)}.pill.neutral i{background:var(--muted)}
+
+/* alerts */
+.alerts{display:grid;gap:0}
+.alert{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.alert:last-child{border-bottom:0}
+.alert b{font-weight:600}
+.alert p{margin:0;color:var(--ink-2);font-size:12.5px;grid-column:2}
+
+/* wallets */
+.wallets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:1000px){.wallets{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.wallets{grid-template-columns:minmax(0,1fr)}}
+.wcard{display:grid;gap:10px;align-content:start}
+.wcard .top2{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.wcard .tot{font-family:var(--f-data);font-size:22px;font-weight:600}
+.cur{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12.5px}
+.cur .meter{height:8px;background:var(--surface-2);border-radius:4px;position:relative;overflow:visible}
+.cur .meter b{display:block;height:100%;border-radius:4px;background:var(--s1)}
+.cur .meter em{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink-2);border-radius:1px}
+.ccode{font-family:var(--f-data);font-weight:600}
+
+/* recon */
+.expl td{background:var(--accent-soft)!important;white-space:normal}
+.expl .ai{display:flex;gap:10px;align-items:flex-start;max-width:900px}
+.expl .ai b{color:var(--ink)}
+.varneg{color:var(--crit)}
+
+/* connections */
+.form{display:grid;gap:14px}
+.frow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:620px){.frow{grid-template-columns:minmax(0,1fr)}}
+label.f{display:grid;gap:5px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+label.f input,label.f select{border:1px solid var(--line);background:var(--bg);border-radius:7px;padding:8px 10px;font-weight:400;color:var(--ink);min-width:0;width:100%}
+.steps{display:flex;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.steps span{padding:3px 9px;border-radius:999px;background:var(--surface-2)}
+.steps span.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.copyline{display:flex;gap:8px;align-items:center;background:var(--surface-2);border-radius:7px;padding:7px 10px;font-family:var(--f-data);font-size:12px;min-width:0}
+.copyline code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.map{display:grid;grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr);gap:6px 8px;align-items:center;font-size:12.5px}
+.map input{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:5px 8px;font-family:var(--f-data);font-size:12px;width:100%;min-width:0}
+.map .std{font-family:var(--f-data);font-size:12px;color:var(--ink-2)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;z-index:90;font-size:13px}
+
+
+/* Screen board — deliberately single dark look for wall TVs */
+.board{position:fixed;inset:0;z-index:80;background:#080c0e;color:#e9f0f2;overflow:auto;padding:calc(20px + env(safe-area-inset-top,0px)) 24px calc(20px + env(safe-area-inset-bottom,0px));color-scheme:dark;font-family:var(--f-body)}
+.bh{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+.bh h2{margin:0;font-family:var(--f-display);font-size:22px;letter-spacing:-.01em}
+.bh .clock{font-family:var(--f-data);font-size:20px;color:#9fb1b8}
+.live{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#9fb1b8;letter-spacing:.06em;text-transform:uppercase}
+.live::before{content:"";width:8px;height:8px;border-radius:50%;background:#0ca30c;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.live::before{animation:none}}
+.btiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+@media (max-width:900px){.btiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.bt{background:#11181b;border:1px solid #1f2a2e;border-radius:12px;padding:18px 20px;min-width:0}
+.bt .k{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8ea0a7;font-weight:600}
+.bt .v{font-family:var(--f-data);font-size:clamp(28px,4.2vw,54px);font-weight:600;letter-spacing:-.03em;margin-top:6px;white-space:nowrap}
+.bt .d{color:#9fb1b8;font-size:13px}
+.brow{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px;margin-top:14px}
+@media (max-width:900px){.brow{grid-template-columns:minmax(0,1fr)}}
+.bpsp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:620px){.bpsp{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.bp{background:#0d1417;border:1px solid #1f2a2e;border-radius:10px;padding:12px 14px;display:grid;gap:6px;min-width:0}
+.bp .n{display:flex;gap:7px;align-items:center;font-weight:600;font-size:14px;min-width:0}
+.bp .n span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bp .m{display:flex;justify-content:space-between;font-family:var(--f-data);font-size:13px;color:#b9c7cc}
+.board .pill{color:#e9f0f2;justify-self:start}
+.board .pill.neutral{background:#1b2428;color:#b9c7cc}
+.balert{padding:10px 0;border-bottom:1px solid #1f2a2e;display:grid;gap:3px}
+.balert:last-child{border-bottom:0}
+.balert p{margin:0;color:#9fb1b8;font-size:13px}
+.board .btn{background:#11181b;border-color:#2a3a40;color:#e9f0f2}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 14h3V9H3zM8.5 14h3V5h-3zM14 14h3v-7h-3z" fill="var(--accent-ink)"/><path d="M2 17h16" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+      <div style="min-width:0">
+        <h1>PSP &amp; CRM Ops Hub</h1>
+        <p>Finance &amp; Operations · payments across all wallets and the client CRM</p>
+      </div>
+      <span class="badge" id="srcBadge" title="All figures on this page are generated sample data">Prototype · sample data</span>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btnBoard" type="button"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Screen board</button>
+    </div>
+  </header>
+
+  <div class="filters">
+    <div class="fgroup"><span class="flabel">Period</span>
+      <label class="dt" for="dFrom">From<input type="date" id="dFrom"></label>
+      <label class="dt" for="dTo">To<input type="date" id="dTo"></label>
+      <div class="seg" id="rangeSeg" role="group" aria-label="Quick periods">
+        <button type="button" data-r="1">Yesterday</button><button type="button" data-r="7">7D</button><button type="button" data-r="30">30D</button><button type="button" data-r="90">90D</button>
+      </div>
+    </div>
+    <div class="fgroup"><span class="flabel">PSPs</span><div class="chips" id="pspChips"></div></div>
+    <span class="mutedtxt" id="periodTxt" style="margin-left:auto"></span>
+  </div>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-t="overview" type="button">Overview</button>
+    <button role="tab" data-t="psp" type="button">PSP performance</button>
+    <button role="tab" data-t="wallets" type="button">Wallets &amp; settlements</button>
+    <button role="tab" data-t="recon" type="button">Reconciliation <span class="cnt" id="breakCnt">0</span></button>
+    <button role="tab" data-t="conn" type="button">Connections</button>
+  </nav>
+
+  <main>
+    <!-- OVERVIEW -->
+    <section class="view" data-v="overview">
+      <div class="kpis" id="kpis"></div>
+      <div class="grid">
+        <div class="panel c8">
+          <div class="ph"><h2>Daily deposits vs withdrawals</h2><div class="legend" id="lineLegend"></div></div>
+          <div class="chart" id="lineChart"></div>
+        </div>
+        <div class="panel c4">
+          <div class="ph"><h2>Needs attention</h2><span class="sub" id="alertCount"></span></div>
+          <div class="alerts" id="alerts"></div>
+        </div>
+        <div class="panel c7">
+          <div class="ph"><h2>Net deposits by PSP</h2><span class="sub">Deposits minus withdrawals, USD</span></div>
+          <div class="hbars" id="netBars"></div>
+        </div>
+        <div class="panel c5">
+          <div class="ph"><h2>Deposit share by PSP</h2><span class="sub">% of deposit value</span></div>
+          <div class="share" id="shareBar"></div>
+          <div class="hbars" id="shareList" style="gap:6px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PSP PERFORMANCE -->
+    <section class="view" data-v="psp" hidden>
+      <div class="panel">
+        <div class="ph"><h2>PSP scorecard</h2><span class="sub">Click a column to sort · success rate: <span class="pill good"><i>✓</i>≥ 95%</span> <span class="pill warn"><i>!</i>90–95%</span> <span class="pill crit"><i>✕</i>&lt; 90%</span></span></div>
+        <div class="tw"><table id="pspTable"></table></div>
+      </div>
+      <div class="grid">
+        <div class="panel c6">
+          <div class="ph"><h2>Success rate by day</h2><span class="sub">Completed ÷ attempted deposits</span></div>
+          <div class="legend" id="srLegend" style="margin-bottom:8px"></div>
+          <div class="chart" id="srChart"></div>
+        </div>
+        <div class="panel c6">
+          <div class="ph"><h2>Fee rate by PSP</h2><span class="sub">Fees ÷ deposit or withdrawal value</span></div>
+          <div class="legend" style="margin-bottom:10px"><span><span class="swl" style="background:var(--s1);height:8px"></span>Deposit fee %</span><span><span class="swl" style="background:var(--s2);height:8px"></span>Withdrawal fee %</span></div>
+          <div class="hbars" id="feeBars"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WALLETS -->
+    <section class="view" data-v="wallets" hidden>
+      <div class="kpis" id="wkpis" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+      <div class="ph" style="margin:4px 0 -4px"><h2>Wallet balances</h2><span class="sub">Snapshot at 09:00 MYT · tick mark = minimum operating balance</span></div>
+      <div class="wallets" id="wallets"></div>
+      <div class="panel">
+        <div class="ph"><h2>Pending settlements</h2><span class="sub">Money PSPs owe us, by expected settlement date</span></div>
+        <div class="tw"><table id="settleTable"></table></div>
+      </div>
+    </section>
+
+    <!-- RECON -->
+    <section class="view" data-v="recon" hidden>
+      <div class="kpis" id="rkpis" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+      <div class="panel" id="dailyPanel">
+        <div class="ph"><h2>Daily reconciliation report</h2><span class="sub">CRM vs PSP for one day, by PSP · download for filing or audit</span></div>
+        <div class="dlrow" style="margin-bottom:12px">
+          <label class="dt" for="dDay">Report date<input type="date" id="dDay"></label>
+          <button class="btn" id="dlDayXlsx" type="button"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 13h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Download day (.xlsx)</button>
+          <button class="btn" id="dlDayCsv" type="button">Download day (.csv)</button>
+          <button class="btn" id="dlPeriod" type="button">Download period, one row per day (.xlsx)</button>
+        </div>
+        <p class="note" id="dlNote" style="margin-bottom:10px"></p>
+        <div class="tw"><table id="dayTable"></table></div>
+      </div>
+      <div class="grid">
+        <div class="panel c4">
+          <div class="ph"><h2>Open breaks by PSP</h2><span class="sub">CRM vs PSP mismatches</span></div>
+          <div class="hbars" id="breakBars"></div>
+          <p class="note" style="margin-top:14px">Matching rule: same CRM client, same amount after fees and FX (±0.5%), within 48 hours.</p>
+        </div>
+        <div class="panel c8">
+          <div class="ph"><h2>Reconciliation breaks</h2>
+            <div class="seg" id="breakSeg" role="group" aria-label="Break status">
+              <button type="button" data-s="open">Open</button><button type="button" data-s="Investigating">Investigating</button><button type="button" data-s="Resolved">Resolved</button><button type="button" data-s="all">All</button>
+            </div>
+          </div>
+          <div class="tw"><table id="breakTable"></table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONNECTIONS -->
+    <section class="view" data-v="conn" hidden>
+      <div class="panel">
+        <div class="ph"><h2>Connected platforms</h2><span class="sub">Every PSP wallet and the CRM feeding the database</span></div>
+        <div class="tw"><table id="connTable"></table></div>
+      </div>
+      <div class="grid">
+        <div class="panel c7">
+          <div class="ph"><h2>Add a connection</h2><div class="steps" id="steps"><span class="on">1 · Platform</span><span>2 · Credentials</span><span>3 · Field mapping</span><span>4 · Test &amp; save</span></div></div>
+          <form class="form" id="connForm" autocomplete="off">
+            <div class="frow">
+              <label class="f">Platform name<input id="cfName" required placeholder="e.g. New e-wallet provider"></label>
+              <label class="f">Platform type<select id="cfType"><option>PSP · E-wallet</option><option>PSP · Card</option><option>PSP · Crypto</option><option>PSP · Bank transfer</option><option>PSP · Local wallet</option><option>CRM</option></select></label>
+            </div>
+            <div class="frow">
+              <label class="f">How does it share data?<select id="cfMethod"><option value="api">API (recommended)</option><option value="webhook">Webhook (real-time push)</option><option value="sftp">SFTP report drop</option><option value="csv">CSV upload</option></select></label>
+              <label class="f">Sync frequency<select id="cfFreq"><option>Every 15 minutes</option><option>Hourly</option><option>Daily at 09:00</option><option>Real-time</option></select></label>
+            </div>
+            <div id="cfCreds" class="frow"></div>
+            <div>
+              <div class="ph" style="margin-bottom:8px"><h2 style="font-size:13.5px">Field mapping</h2><span class="sub">Match the platform's fields to the standard transaction table</span></div>
+              <div class="map" id="cfMap"></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button class="btn primary" type="submit" id="cfSubmit">Test &amp; save connection</button>
+              <span class="mutedtxt">Prototype: credentials are not stored or sent anywhere.</span>
+            </div>
+          </form>
+        </div>
+        <div class="panel c5">
+          <div class="ph"><h2>How data flows</h2></div>
+          <svg viewBox="0 0 360 300" width="100%" role="img" aria-label="Data flow from PSPs and CRM through connectors to database, then to dashboards, screen boards and alerts" style="max-width:100%;height:auto">
+            <g font-family="var(--f-body)" font-size="11.5">
+              <rect x="6" y="14" width="104" height="44" rx="8" fill="var(--surface-2)" stroke="var(--line)"/><text x="58" y="34" text-anchor="middle" fill="var(--ink)" font-weight="600">PSP wallets</text><text x="58" y="49" text-anchor="middle" fill="var(--muted)" font-size="10">API · webhook · file</text>
+              <rect x="6" y="76" width="104" height="44" rx="8" fill="var(--surface-2)" stroke="var(--line)"/><text x="58" y="96" text-anchor="middle" fill="var(--ink)" font-weight="600">Client CRM</text><text x="58" y="111" text-anchor="middle" fill="var(--muted)" font-size="10">API · DB replica</text>
+              <rect x="138" y="44" width="92" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="184" y="64" text-anchor="middle" fill="var(--ink)" font-weight="600">Connectors</text><text x="184" y="79" text-anchor="middle" fill="var(--muted)" font-size="10">scheduled syncs</text>
+              <rect x="258" y="44" width="96" height="46" rx="8" fill="var(--surface-2)" stroke="var(--line)"/><text x="306" y="64" text-anchor="middle" fill="var(--ink)" font-weight="600">Database</text><text x="306" y="79" text-anchor="middle" fill="var(--muted)" font-size="10">raw → clean</text>
+              <rect x="190" y="138" width="164" height="46" rx="8" fill="var(--surface-2)" stroke="var(--line)"/><text x="272" y="158" text-anchor="middle" fill="var(--ink)" font-weight="600">Unified model</text><text x="272" y="173" text-anchor="middle" fill="var(--muted)" font-size="10">transactions · balances · recon</text>
+              <rect x="6" y="230" width="104" height="46" rx="8" fill="var(--surface-2)" stroke="var(--line)"/><text x="58" y="250" text-anchor="middle" fill="var(--ink)" font-weight="600">Dashboards</text><text x="58" y="265" text-anchor="middle" fill="var(--muted)" font-size="10">this hub</text>
+              <rect x="128" y="230" width="104" height="46" rx="8" fill="var(--surface-2)" stroke="var(--line)"/><text x="180" y="250" text-anchor="middle" fill="var(--ink)" font-weight="600">Screen boards</text><text x="180" y="265" text-anchor="middle" fill="var(--muted)" font-size="10">ops floor TV</text>
+              <rect x="250" y="230" width="104" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="302" y="250" text-anchor="middle" fill="var(--ink)" font-weight="600">Alerts</text><text x="302" y="265" text-anchor="middle" fill="var(--muted)" font-size="10">email · chat</text>
+            </g>
+            <g stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#ah)">
+              <path d="M110 36 H124 V60 H134"/><path d="M110 98 H124 V74 H134"/><path d="M230 67 H254"/><path d="M306 90 V134"/>
+              <path d="M272 184 V206 H58 V226"/><path d="M180 206 V226"/><path d="M302 206 V226"/>
+            </g>
+            <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="var(--muted)"/></marker></defs>
+          </svg>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="tip" id="tip" role="tooltip"></div>
+
+<div class="board" id="board" hidden>
+  <div class="bh">
+    <div><span class="live">Live · refreshes every 5 s (simulated)</span><h2>Payments floor · today</h2></div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span class="clock" id="clock"></span><button class="btn" id="bFull" type="button">Full screen</button><button class="btn" id="bExit" type="button">Exit board</button></div>
+  </div>
+  <div class="btiles" id="btiles"></div>
+  <div class="brow">
+    <div class="bt"><div class="k" style="margin-bottom:12px">PSP status</div><div class="bpsp" id="bpsp"></div></div>
+    <div class="bt"><div class="k" style="margin-bottom:4px">Alerts</div><div id="balerts"></div></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(async function(){
+"use strict";
+/* ---------- live data ----------
+   The page reads GET {API}/api/hub (api/server.py). API base: ?api=https://host, else same origin
+   when served over http(s). If the API is unreachable or has no PSP data yet, the sample data below is used. */
+async function loadLive(){
+  const q=new URLSearchParams(location.search).get("api");
+  const base=q!=null?q.replace(/\/$/,""):(/^https?:$/.test(location.protocol)?"":null);
+  if(base==null)return null;
+  try{const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),8000);
+    const r=await fetch(base+"/api/hub",{signal:ctl.signal});clearTimeout(t);
+    if(!r.ok)return null;const j=await r.json();if(!j.psps||!j.psps.length)return null;j.base=base;return j}
+  catch(e){return null}
+}
+const LIVE=await loadLive();
+/* ---------- sample data ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R=mulberry32(20261006);
+let NDAYS=366; const DAY=864e5;
+const END=Date.UTC(2026,9,5);
+let dates=Array.from({length:NDAYS},(_,i)=>new Date(END-(NDAYS-1-i)*DAY));
+let PSPS=[
+ {id:"nw",wfee:.010,name:"Northwind Pay",type:"E-wallet",method:"API",freq:"Every 15 min",base:182000,growth:.18,sr:.968,fee:.018,proc:2.1,ticket:420},
+ {id:"lu",wfee:.015,name:"Lumen Wallet",type:"Local wallet · MY/TH",method:"Webhook",freq:"Real-time",base:121000,growth:.30,sr:.952,fee:.022,proc:4.6,ticket:260},
+ {id:"ke",wfee:.012,name:"Kestrel Cards",type:"Card",method:"API",freq:"Every 15 min",base:148000,growth:.05,sr:.928,fee:.029,proc:1.2,ticket:510},
+ {id:"or",wfee:.005,name:"Orbit Crypto",type:"Crypto · USDT",method:"API",freq:"Hourly",base:96000,growth:.42,sr:.985,fee:.008,proc:11.5,ticket:880},
+ {id:"hb",wfee:.003,name:"Harbor Bank Transfer",type:"Bank transfer",method:"SFTP",freq:"Daily 09:00",base:139000,growth:.02,sr:.991,fee:.005,proc:176,ticket:1650},
+ {id:"su",wfee:.018,name:"Sunda QR",type:"Local wallet · ID/VN",method:"CSV upload",freq:"Daily (manual)",base:61000,growth:.25,sr:.938,fee:.025,proc:7.8,ticket:140}
+];
+PSPS.forEach((p,i)=>p.color="var(--s"+(i+1)+")");
+const R2=mulberry32(4242);
+let daily=PSPS.map(p=>dates.map((d,i)=>{
+  const dow=d.getUTCDay(); const wk=(dow===0||dow===6)?.76:1;
+  const trend=1+(i/NDAYS)*p.growth;
+  let dep=p.base*wk*trend*(.82+R()*.36); if(R()<.04) dep*=1.45;
+  const wd=dep*(.6+R()*.24);
+  const cnt=Math.max(1,Math.round(dep/(p.ticket*(.88+R()*.24))));
+  let sr=p.sr-(R()*.02)+.006;
+  if(p.id==="ke"&&i>=NDAYS-4) sr=.858+R()*.02; // incident story: card declines spiking
+  if(p.id==="su"&&i>=NDAYS-2) sr=.905+R()*.01;
+  sr=Math.min(.997,sr);
+  const att=Math.round(cnt/sr);
+  return {dep,wd,cnt,att,fees:dep*p.fee*(.95+R()*.1),wfees:wd*p.wfee*(.95+R2()*.1),proc:p.proc*(.8+R()*.45)};
+}));
+let FX={USD:1,EUR:1.09,MYR:.236,THB:.0297,USDT:1,IDR:.0000615,VND:.0000394};
+let WALLETS=[
+ {psp:"nw",cur:[["USD",412800,150000],["EUR",88500,40000]]},
+ {psp:"lu",cur:[["MYR",1186000,600000],["THB",3920000,5000000]]},
+ {psp:"ke",cur:[["USD",265300,120000]]},
+ {psp:"or",cur:[["USDT",198400,90000]]},
+ {psp:"hb",cur:[["USD",934100,250000],["MYR",2210000,800000]]},
+ {psp:"su",cur:[["IDR",1460000000,2000000000],["VND",4810000000,3000000000]]}
+];
+let SETTLE=[
+ {psp:"nw",ref:"NWP-STL-26-1004",amt:356200,cur:"USD",exp:"2026-10-06",age:0},
+ {psp:"lu",ref:"LUM-0929-MY",amt:742500,cur:"MYR",exp:"2026-10-02",age:4},
+ {psp:"ke",ref:"KC-B-88213",amt:288900,cur:"USD",exp:"2026-10-07",age:0},
+ {psp:"ke",ref:"KC-B-88140",amt:301450,cur:"USD",exp:"2026-09-30",age:6},
+ {psp:"or",ref:"ORB-W-5531",amt:142000,cur:"USDT",exp:"2026-10-05",age:1},
+ {psp:"hb",ref:"HBT-26100",amt:512300,cur:"USD",exp:"2026-10-06",age:0},
+ {psp:"su",ref:"SQR-ID-0927",amt:1980000000,cur:"IDR",exp:"2026-10-01",age:5}
+];
+const TYPES=["Amount mismatch","FX difference","Missing in PSP","Missing in CRM","Duplicate in CRM"];
+let BREAKS=[];
+(function(){
+  const firsts=["A. Rahman","L. Chen","S. Nguyen","P. Wong","M. Tan","R. Kumar","J. Lim","D. Santoso","K. Ong","N. Ismail","T. Pham","H. Lee"];
+  let n=0;
+  for(let di=0;di<NDAYS;di++){PSPS.forEach(p=>{
+   while(R()<.42){
+    const t=TYPES[Math.floor(R()*TYPES.length)];
+    const ago=NDAYS-1-di;
+    const crm=Math.round((p.ticket*(.5+R()*3))/5)*5;
+    let pspAmt=crm;
+    if(t==="Amount mismatch") pspAmt=+(crm-(crm*p.fee)-Math.round(R()*8)).toFixed(2);
+    if(t==="FX difference") pspAmt=+(crm*(1-(.004+R()*.012))).toFixed(2);
+    if(t==="Missing in PSP") pspAmt=null;
+    let crmAmt=crm; if(t==="Missing in CRM") crmAmt=null;
+    const st=ago>14?(R()<.92?"Resolved":"Investigating"):ago>2?(R()<.4?"Resolved":R()<.5?"Investigating":"Open"):(R()<.3?"Investigating":"Open");
+    BREAKS.push({id:"BRK-"+(4000+(++n)),di,psp:p.id,type:t,ago,date:dates[di],client:"CL-"+(100200+Math.floor(R()*8800)),cname:firsts[Math.floor(R()*firsts.length)],crm:crmAmt,pspAmt,txn:p.id.toUpperCase()+"-"+Math.floor(1e6+R()*8e6),status:st});
+   }
+  })}
+  BREAKS.sort((a,b)=>a.ago-b.ago);
+})();
+let CONNS=[
+ ...PSPS.map(p=>({name:p.name,cat:"PSP · "+p.type,method:p.method,freq:p.freq,last:p.id==="su"?26*60:p.id==="hb"?(9*60+40):p.id==="or"?38:p.id==="lu"?0.5:6,rec:Math.round(daily[PSPS.indexOf(p)][NDAYS-1].att*1.9),pspId:p.id})),
+ {name:"Client CRM",cat:"CRM",method:"API",freq:"Every 15 min",last:4,rec:18420}
+];
+if(LIVE){
+  NDAYS=LIVE.dates.length;dates=LIVE.dates.map(d=>new Date(d+"T00:00:00Z"));
+  PSPS=LIVE.psps;daily=LIVE.daily;FX=Object.assign({},FX,LIVE.fx);WALLETS=LIVE.wallets;SETTLE=LIVE.settle;
+  BREAKS=LIVE.breaks.map(b=>Object.assign({},b,{date:new Date(b.date+"T00:00:00Z")}));CONNS=LIVE.conns;
+  PSPS.forEach((p,i)=>p.color=i<6?"var(--s"+(i+1)+")":"hsl("+Math.round(i*137.5%360)+" 55% 50%)");
+}
+const SRC=LIVE?"Live data":"Sample data";
+if(LIVE){const bd=document.getElementById("srcBadge");bd.textContent="Live · API";bd.title="Data from "+(LIVE.base||location.origin)+"/api/hub, generated "+LIVE.generated_at.slice(0,16).replace("T"," ")+" UTC"}
+const srOf=r=>r.att?r.cnt/r.att:null;
+
+/* ---------- state ---------- */
+const store={get(k,d){try{const v=localStorage.getItem("opshub."+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("opshub."+k,JSON.stringify(v))}catch(e){}}};
+const S={from:store.get("from",null),to:store.get("to",null),day:null,sel:new Set(store.get("sel",PSPS.map(p=>p.id))),tab:store.get("tab","overview"),bfilter:"open",sort:{k:"dep",d:-1},expanded:null};
+if(!PSPS.some(p=>S.sel.has(p.id))) S.sel=new Set(PSPS.map(p=>p.id));
+const iso=d=>d.toISOString().slice(0,10);
+const FIRST=iso(dates[0]),LAST=iso(dates[NDAYS-1]);
+const dIdx=v=>Math.max(0,Math.min(NDAYS-1,Math.round((Date.parse(v)-dates[0].getTime())/DAY)));
+const validIso=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&!isNaN(Date.parse(v));
+if(!validIso(S.from)||!validIso(S.to)||S.from>S.to||S.from<FIRST||S.to>LAST){S.to=LAST;S.from=iso(dates[NDAYS-30])}
+S.day=S.to;
+const hash=(location.hash||"").slice(1); if(["overview","psp","wallets","recon","conn"].includes(hash)) S.tab=hash;
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pById=id=>PSPS.find(p=>p.id===id);
+function money(v,dec){const a=Math.abs(v),s=v<0?"−":"";if(a>=1e9)return s+"$"+(a/1e9).toFixed(2)+"B";if(a>=1e6)return s+"$"+(a/1e6).toFixed(dec??2)+"M";if(a>=1e4)return s+"$"+(a/1e3).toFixed(dec??1)+"K";return s+"$"+a.toLocaleString("en-US",{maximumFractionDigits:0})}
+function moneyFull(v){return (v<0?"−":"")+"$"+Math.abs(v).toLocaleString("en-US",{maximumFractionDigits:0})}
+function native(v,cur){if(v==null)return"—";const a=Math.abs(v);let s;if(a>=1e9)s=(a/1e9).toFixed(2)+"B";else if(a>=1e6)s=(a/1e6).toFixed(2)+"M";else if(a>=1e4)s=(a/1e3).toFixed(1)+"K";else s=a.toLocaleString("en-US",{maximumFractionDigits:2});return cur+" "+s}
+const pct=(v,d=1)=>(v*100).toFixed(d)+"%";
+const fmtD=d=>d.toLocaleDateString("en-GB",{day:"numeric",month:"short",timeZone:"UTC"});
+const fmtDY=d=>d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"});
+function pill(level,label){const ic={good:"✓",warn:"!",serious:"!",crit:"✕",neutral:"•"}[level];return `<span class="pill ${level}"><i aria-hidden="true">${ic}</i>${esc(label)}</span>`}
+function srLevel(sr){return sr>=.95?"good":sr>=.90?"warn":"crit"}
+function idx(){const from=dIdx(S.from),to=dIdx(S.to),len=to-from+1;return{from,to,len,pfrom:from-len,pto:from-1}}
+function agg(ids,from,to){const o={dep:0,wd:0,cnt:0,att:0,fees:0,wfees:0,procW:0};from=Math.max(0,from);ids.forEach(id=>{const di=daily[PSPS.findIndex(p=>p.id===id)];for(let i=from;i<=to;i++){const r=di[i];o.dep+=r.dep;o.wd+=r.wd;o.cnt+=r.cnt;o.att+=r.att;o.fees+=r.fees;o.wfees+=r.wfees;o.procW+=r.proc*r.cnt}});o.net=o.dep-o.wd;o.sr=o.att?o.cnt/o.att:0;o.proc=o.cnt?o.procW/o.cnt:0;return o}
+const selIds=()=>PSPS.filter(p=>S.sel.has(p.id)).map(p=>p.id);
+function delta(cur,prev,label){if(!prev)return`<span class="mutedtxt">No earlier data to compare</span>`;const d=(cur-prev)/Math.abs(prev);const cls=d>=0?"up":"down";return `<span class="${cls}">${(d>=0?"+":"")+(d*100).toFixed(1)}%</span> vs prev ${label}`}
+const rangeLabel=()=>{const l=idx().len;return l===1?"day":l+" days"};
+function walletUSD(w){return w.cur.reduce((s,c)=>s+c[1]*(FX[c[0]]||0),0)}
+function walletStatus(w){let worst="good";w.cur.forEach(c=>{const r=c[1]/c[2];if(r<1)worst="crit";else if(r<1.25&&worst!=="crit")worst="warn"});return worst}
+function settleStatus(s){return s.age>=3?["crit","Overdue "+s.age+"d"]:s.age>=1?["warn","Late "+s.age+"d"]:["good","On schedule"]}
+function connStatus(c){const lim={"Every 15 min":30,"Real-time":10,"Hourly":90,"Daily 09:00":26*60,"Daily (manual)":24*60}[c.freq]||60;if(c.testing)return["neutral","Testing…"];if(c.last>lim)return["crit","Overdue"];if(c.last>lim*.66)return["warn","Delayed"];return["good","Healthy"]}
+function ago(m){if(m<1)return"just now";if(m<60)return Math.round(m)+" min ago";const h=Math.floor(m/60);return h+"h "+Math.round(m%60)+"m ago"}
+function visibleBreaks(){const {from,to}=idx();return BREAKS.filter(b=>S.sel.has(b.psp)&&b.di>=from&&b.di<=to)}
+function breakVar(b){if(b.crm==null)return b.pspAmt;if(b.pspAmt==null)return b.crm;return b.crm-b.pspAmt}
+
+/* ---------- tooltip ---------- */
+const tip=$("#tip");
+function showTip(html,x,y){tip.innerHTML=html;tip.style.opacity=1;const w=tip.offsetWidth,h=tip.offsetHeight;let left=x+14,top=y+14;if(left+w>innerWidth-8)left=x-w-14;if(top+h>innerHeight-8)top=y-h-14;tip.style.left=Math.max(8,left)+"px";tip.style.top=Math.max(8,top)+"px"}
+function hideTip(){tip.style.opacity=0}
+const trow=(color,label,val)=>`<div class="r"><span>${color?`<span class="swl" style="background:${color}"></span>`:""}${esc(label)}</span><span class="num">${val}</span></div>`;
+
+/* ---------- charts ---------- */
+function niceMax(v){if(v<=0)return 1;const e=Math.pow(10,Math.floor(Math.log10(v)));const m=v/e;const n=m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10;return n*e}
+function lineChart(el,opts){
+  const W=Math.max(300,el.clientWidth||600),H=opts.h||240,m={l:52,r:opts.rpad||14,t:10,b:24};
+  const iw=W-m.l-m.r,ih=H-m.t-m.b,n=opts.x.length;
+  let lo=opts.min??0,hi=opts.max??niceMax(Math.max(...opts.series.flatMap(s=>s.v)));
+  const X=i=>m.l+(n<=1?iw/2:i*iw/(n-1)),Y=v=>m.t+ih-(v-lo)/(hi-lo)*ih;
+  const ticks=opts.ticks||[0,.25,.5,.75,1].map(f=>lo+(hi-lo)*f);
+  let s=`<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${esc(opts.label)}"><g class="axis">`;
+  ticks.forEach(t=>{s+=`<line class="gridl" x1="${m.l}" x2="${W-m.r}" y1="${Y(t)}" y2="${Y(t)}"/><text x="${m.l-8}" y="${Y(t)+3.5}" text-anchor="end">${opts.fy(t)}</text>`});
+  const step=Math.max(1,Math.ceil(n/Math.max(2,Math.floor(iw/70))));
+  for(let i=0;i<n;i+=step){s+=`<text x="${X(i)}" y="${H-6}" text-anchor="middle">${fmtD(opts.x[i])}</text>`}
+  s+=`</g>`;
+  opts.series.forEach((se,k)=>{
+    const pts=se.v.map((v,i)=>[X(i),Y(Math.max(lo,v))]);
+    if(opts.area&&k===0){s+=`<path d="M${pts.map(p=>p.join(",")).join("L")}L${X(n-1)},${Y(lo)}L${X(0)},${Y(lo)}Z" fill="${se.c}" fill-opacity=".08"/>`}
+    if(n===1){s+=`<circle cx="${pts[0][0]}" cy="${pts[0][1]}" r="5" fill="${se.c}" stroke="var(--surface)" stroke-width="2"/>`}
+    else{s+=`<path d="M${pts.map(p=>p.join(",")).join("L")}" fill="none" stroke="${se.c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const e=pts[n-1];s+=`<circle cx="${e[0]}" cy="${e[1]}" r="4" fill="${se.c}" stroke="var(--surface)" stroke-width="2"/>`}
+  });
+  if(opts.direct){opts.series.forEach(se=>{const y=Y(se.v[n-1]);s+=`<text x="${X(n-1)+8}" y="${y+4}" font-size="11" font-family="var(--f-body)" font-weight="600" fill="var(--ink-2)">${esc(se.name)}</text>`})}
+  s+=`<line class="xh" x1="0" x2="0" y1="${m.t}" y2="${m.t+ih}" stroke="var(--muted)" stroke-dasharray="3 3" opacity="0"/><rect x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="transparent" class="hit"/></svg>`;
+  el.innerHTML=s;
+  const svg=el.querySelector("svg"),hit=el.querySelector(".hit"),xh=el.querySelector(".xh");
+  hit.addEventListener("mousemove",ev=>{const r=svg.getBoundingClientRect();const px=(ev.clientX-r.left)*W/r.width;const i=Math.max(0,Math.min(n-1,Math.round((px-m.l)/(iw/(Math.max(1,n-1))))));xh.setAttribute("x1",X(i));xh.setAttribute("x2",X(i));xh.setAttribute("opacity",1);
+    showTip(`<div class="t">${fmtD(opts.x[i])} ${opts.x[i].getUTCFullYear()}</div>`+opts.series.map(se=>trow(se.c,se.name,opts.ft(se.v[i]))).join("")+(opts.extra?opts.extra(i):""),ev.clientX,ev.clientY)});
+  hit.addEventListener("mouseleave",()=>{xh.setAttribute("opacity",0);hideTip()});
+}
+function hbars(el,rows,fmt,opts={}){
+  const max=Math.max(...rows.map(r=>Math.abs(r.v)))||1;
+  el.innerHTML=rows.map((r,i)=>`<div class="hb" data-i="${i}"><div class="l"><span class="dot" style="background:${r.c}"></span><span>${esc(r.name)}</span></div><div class="track"><div class="bar" style="width:${Math.max(.5,Math.abs(r.v)/max*100)}%;background:${opts.single||r.c}${r.v<0?";opacity:.45":""}"></div></div><div class="val num">${fmt(r.v)}</div></div>`).join("")||`<p class="note">No PSPs selected.</p>`;
+  el.querySelectorAll(".hb").forEach(row=>{const r=rows[+row.dataset.i];row.addEventListener("mousemove",ev=>showTip(`<div class="t">${esc(r.name)}</div>`+(r.tip||trow(r.c,opts.label||"Value",fmt(r.v))),ev.clientX,ev.clientY));row.addEventListener("mouseleave",hideTip)});
+}
+function spark(vals,color){const W=110,H=26,mx=Math.max(...vals),mn=Math.min(...vals);const X=i=>vals.length<2?W/2:i*(W-4)/(vals.length-1)+2,Y=v=>H-3-(mx===mn?.5:(v-mn)/(mx-mn))*(H-6);const d=vals.map((v,i)=>`${X(i)},${Y(v)}`).join("L");const e=vals.length-1;return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="M${d}L${X(e)},${H}L${X(0)},${H}Z" fill="${color}" fill-opacity=".12"/><path d="M${d}" fill="none" stroke="${color}" stroke-width="1.5"/><circle cx="${X(e)}" cy="${Y(vals[e])}" r="2.5" fill="${color}"/></svg>`}
+
+/* ---------- filters ---------- */
+function renderFilters(){
+  const {from,to,len}=idx();
+  ["dFrom","dTo"].forEach(id=>{const el=$("#"+id);el.min=FIRST;el.max=LAST});
+  $("#dFrom").value=S.from;$("#dTo").value=S.to;
+  $("#rangeSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",to===NDAYS-1&&+b.dataset.r===len));
+  $("#pspChips").innerHTML=PSPS.map(p=>`<button type="button" class="chip" data-id="${p.id}" aria-pressed="${S.sel.has(p.id)}"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</button>`).join("");
+  $("#periodTxt").textContent=(len===1?fmtDY(dates[to]):fmtDY(dates[from])+" – "+fmtDY(dates[to]))+" · "+len+(len===1?" day":" days")+" · USD · "+SRC;
+}
+function setPeriod(f,t){if(!validIso(f)||!validIso(t))return;if(f>t){const x=f;f=t;t=x}f=f<FIRST?FIRST:f>LAST?LAST:f;t=t<FIRST?FIRST:t>LAST?LAST:t;S.from=f;S.to=t;S.day=t;store.set("from",f);store.set("to",t);renderAll()}
+$("#rangeSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const r=+b.dataset.r;setPeriod(iso(dates[NDAYS-r]),LAST)});
+$("#dFrom").addEventListener("change",e=>{if(e.target.value)setPeriod(e.target.value,S.to);else renderFilters()});
+$("#dTo").addEventListener("change",e=>{if(e.target.value)setPeriod(S.from,e.target.value);else renderFilters()});
+$("#pspChips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;const id=b.dataset.id;if(S.sel.has(id)){if(S.sel.size>1)S.sel.delete(id)}else S.sel.add(id);store.set("sel",[...S.sel]);renderAll()});
+
+/* ---------- tabs ---------- */
+function renderTabs(){document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.t===S.tab));document.querySelectorAll(".view").forEach(v=>v.hidden=v.dataset.v!==S.tab)}
+$("#tabs").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;S.tab=b.dataset.t;store.set("tab",S.tab);renderTabs();renderView()});
+
+/* ---------- alerts (shared) ---------- */
+function computeAlerts(){
+  const out=[];const n=NDAYS-1;
+  PSPS.forEach((p,pi)=>{const t=daily[pi][n],sr=t.att?t.cnt/t.att:1;const prev=agg([p.id],n-7,n-1).sr;if(sr<.9)out.push({lv:"crit",title:`${p.name} success rate ${pct(sr)}`,body:`Down from ${pct(prev)} over the prior week. Check decline codes with the PSP.`,psp:p.id})});
+  WALLETS.forEach(w=>{w.cur.forEach(c=>{if(c[1]<c[2])out.push({lv:"warn",title:`${pById(w.psp).name} ${c[0]} wallet below minimum`,body:`${native(c[1],c[0])} vs ${native(c[2],c[0])} floor. Top up before payout runs.`,psp:w.psp})})});
+  SETTLE.forEach(s=>{if(s.age>=3)out.push({lv:"crit",title:`${pById(s.psp).name} settlement overdue ${s.age} days`,body:`${s.ref} · ${native(s.amt,s.cur)} expected ${s.exp}.`,psp:s.psp})});
+  CONNS.forEach(c=>{const st=connStatus(c);if(st[0]==="crit")out.push({lv:"serious",title:`${c.name} feed not updated`,body:`Last sync ${ago(c.last)} (${c.method}, ${c.freq}). Dashboards for this PSP may be stale.`,psp:c.pspId})});
+  const old=BREAKS.filter(b=>b.status!=="Resolved"&&b.ago>3);if(old.length)out.push({lv:"warn",title:`${old.length} reconciliation breaks open over 3 days`,body:`Total variance ${money(old.reduce((s,b)=>s+Math.abs(breakVar(b)),0))}.`});
+  const ord={crit:0,serious:1,warn:2};return out.sort((a,b)=>ord[a.lv]-ord[b.lv]);
+}
+const lvLabel={crit:"Critical",serious:"Serious",warn:"Warning"};
+
+/* ---------- OVERVIEW ---------- */
+function renderOverview(){
+  const ids=selIds(),{from,to,pfrom,pto}=idx(),c=agg(ids,from,to),p=agg(ids,pfrom,pto),rl=rangeLabel();
+  const ob=visibleBreaks().filter(b=>b.status!=="Resolved");
+  const k=[["Deposits",money(c.dep),delta(c.dep,p.dep,rl)],["Withdrawals",money(c.wd),delta(c.wd,p.wd,rl)],["Net deposits",money(c.net),delta(c.net,p.net,rl)],["Success rate",pct(c.sr),`<span class="${c.sr>=p.sr?"up":"down"}">${((c.sr-p.sr)*100>=0?"+":"")+((c.sr-p.sr)*100).toFixed(2)} pts</span> vs prev ${rl}`],["PSP fees",money(c.fees+c.wfees),`Deposit ${pct(c.fees/c.dep,2)} · Withdrawal ${pct(c.wfees/c.wd,2)}`],["Open recon breaks",String(ob.length),money(ob.reduce((s,b)=>s+Math.abs(breakVar(b)),0))+" variance"]];
+  $("#kpis").innerHTML=k.map(x=>`<div class="kpi"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="d">${x[2]}</div></div>`).join("");
+  // line
+  const xs=dates.slice(from,to+1),dep=[],wd=[];for(let i=from;i<=to;i++){let a=0,b=0;ids.forEach(id=>{const r=daily[PSPS.findIndex(q=>q.id===id)][i];a+=r.dep;b+=r.wd});dep.push(a);wd.push(b)}
+  $("#lineLegend").innerHTML=`<span><span class="swl" style="background:var(--s1)"></span>Deposits</span><span><span class="swl" style="background:var(--s2)"></span>Withdrawals</span>`;
+  lineChart($("#lineChart"),{x:xs,series:[{name:"Deposits",c:"var(--s1)",v:dep},{name:"Withdrawals",c:"var(--s2)",v:wd}],fy:v=>money(v,0),ft:v=>moneyFull(v),label:"Daily deposits and withdrawals",area:true,direct:true,rpad:86,h:320,extra:i=>trow(null,"Net",moneyFull(dep[i]-wd[i]))});
+  // alerts
+  const al=computeAlerts().filter(a=>!a.psp||S.sel.has(a.psp));
+  $("#alertCount").textContent=al.length+" items";
+  $("#alerts").innerHTML=al.slice(0,5).map(a=>`<div class="alert">${pill(a.lv,lvLabel[a.lv])}<b>${esc(a.title)}</b><p>${esc(a.body)}</p></div>`).join("")||`<p class="note">All clear for the selected PSPs.</p>`;
+  // net bars
+  const rows=ids.map(id=>{const p=pById(id),a=agg([id],from,to);return{name:p.name,c:p.color,v:a.net,tip:trow(null,"Deposits",moneyFull(a.dep))+trow(null,"Withdrawals",moneyFull(a.wd))+trow(null,"Net",moneyFull(a.net))}}).sort((a,b)=>b.v-a.v);
+  hbars($("#netBars"),rows,v=>money(v),{single:"var(--s1)"});
+  // share
+  const sh=ids.map(id=>{const p=pById(id);return{p,v:agg([id],from,to).dep}});const tot=sh.reduce((s,x)=>s+x.v,0);
+  $("#shareBar").innerHTML=sh.map(x=>`<div style="width:${x.v/tot*100}%;background:${x.p.color}" data-id="${x.p.id}"></div>`).join("");
+  $("#shareBar").querySelectorAll("div").forEach(d=>{const x=sh.find(s=>s.p.id===d.dataset.id);d.addEventListener("mousemove",ev=>showTip(`<div class="t">${esc(x.p.name)}</div>`+trow(x.p.color,"Share",pct(x.v/tot))+trow(null,"Deposits",moneyFull(x.v)),ev.clientX,ev.clientY));d.addEventListener("mouseleave",hideTip)});
+  $("#shareList").innerHTML=sh.slice().sort((a,b)=>b.v-a.v).map(x=>`<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px"><span style="display:inline-flex;gap:7px;align-items:center;min-width:0"><span class="dot" style="background:${x.p.color}"></span>${esc(x.p.name)}</span><span class="num">${pct(x.v/tot)} <span class="mutedtxt">· ${money(x.v)}</span></span></div>`).join("");
+}
+
+/* ---------- PSP ---------- */
+function renderPsp(){
+  const {from,to}=idx();
+  const rows=selIds().map(id=>{const p=pById(id),pi=PSPS.indexOf(p),a=agg([id],from,to);const sp=[];for(let i=Math.max(0,to-29,from);i<=to;i++)sp.push(daily[pi][i].dep);return{p,...a,feeR:a.dep?a.fees/a.dep:0,wfeeR:a.wd?a.wfees/a.wd:0,sp}});
+  const cols=[["name","PSP",0],["method","Connection",0],["dep","Deposits",1],["wd","Withdrawals",1],["net","Net",1],["cnt","Txns",1],["sr","Success",1],["proc","Avg time",1],["feeR","Deposit Fee %",1],["wfeeR","Withdrawal Fee %",1],["fees","Deposit Fee",1],["wfees","Withdrawal Fee",1],[null,"Trend (≤30d)",0]];
+  const sk=S.sort.k;rows.sort((a,b)=>{const va=sk==="name"?a.p.name:sk==="method"?a.p.method:a[sk],vb=sk==="name"?b.p.name:sk==="method"?b.p.method:b[sk];return(va>vb?1:va<vb?-1:0)*S.sort.d});
+  const fmtProc=m=>m>=60?(m/60).toFixed(1)+" h":m.toFixed(1)+" min";
+  $("#pspTable").innerHTML=`<thead><tr>${cols.map(c=>`<th class="${c[0]?"sortable":""} ${c[2]?"r":""}" data-k="${c[0]||""}">${c[1]}${S.sort.k===c[0]?(S.sort.d>0?" ↑":" ↓"):""}</th>`).join("")}</tr></thead><tbody>`+rows.map(r=>`<tr><td><div class="namecell"><span class="dot" style="background:${r.p.color}"></span>${esc(r.p.name)}</div><div class="mutedtxt">${esc(r.p.type)}</div></td><td>${esc(r.p.method)}</td><td class="r num">${money(r.dep)}</td><td class="r num">${money(r.wd)}</td><td class="r num">${money(r.net)}</td><td class="r num">${r.cnt.toLocaleString()}</td><td class="r">${pill(srLevel(r.sr),pct(r.sr))}</td><td class="r num">${fmtProc(r.proc)}</td><td class="r num">${pct(r.feeR,2)}</td><td class="r num">${pct(r.wfeeR,2)}</td><td class="r num">${money(r.fees)}</td><td class="r num">${money(r.wfees)}</td><td>${spark(r.sp,r.p.color)}</td></tr>`).join("")+`</tbody>`;
+  $("#pspTable").querySelectorAll("th.sortable").forEach(th=>th.addEventListener("click",()=>{const k=th.dataset.k;S.sort=S.sort.k===k?{k,d:-S.sort.d}:{k,d:k==="name"||k==="method"?1:-1};renderPsp()}));
+  // success rate chart: always ≥14 days for readability
+  const f2=Math.max(0,Math.min(from,to-13)),xs=dates.slice(f2,to+1);
+  const show=selIds().map(id=>pById(id));
+  const ser=show.map(p=>{const pi=PSPS.indexOf(p);return{name:p.name,c:p.color,v:daily[pi].slice(f2,to+1).map(srOf).map((v,i,a)=>{if(v!=null)return v;for(let j=i-1;j>=0;j--)if(a[j]!=null)return a[j];return 1})}});
+  $("#srLegend").innerHTML=ser.map(s=>`<span><span class="swl" style="background:${s.c}"></span>${esc(s.name)}</span>`).join("");
+  lineChart($("#srChart"),{x:xs,series:ser,min:.82,max:1,ticks:[.85,.9,.95,1],fy:v=>Math.round(v*100)+"%",ft:v=>pct(v),label:"Daily success rate by PSP",h:230,direct:false});
+  const fr=selIds().map(id=>{const p=pById(id),a=agg([id],from,to);return{p,a,d:a.dep?a.fees/a.dep:0,w:a.wd?a.wfees/a.wd:0}}).sort((x,y)=>y.d-x.d);
+  const fmax=Math.max(...fr.flatMap(x=>[x.d,x.w]))||1;
+  $("#feeBars").innerHTML=fr.map((x,i)=>`<div class="hb fb" data-i="${i}"><div class="l"><span class="dot" style="background:${x.p.color}"></span><span>${esc(x.p.name)}</span></div><div class="track" style="height:auto;display:grid;gap:3px"><div class="bar" style="height:9px;width:${Math.max(.5,x.d/fmax*100)}%;background:var(--s1)"></div><div class="bar" style="height:9px;width:${Math.max(.5,x.w/fmax*100)}%;background:var(--s2)"></div></div><div class="val num" style="line-height:1.15">${pct(x.d,2)}<br>${pct(x.w,2)}</div></div>`).join("")||`<p class="note">No PSPs selected.</p>`;
+  $("#feeBars").querySelectorAll(".fb").forEach(row=>{const x=fr[+row.dataset.i];row.addEventListener("mousemove",ev=>showTip(`<div class="t">${esc(x.p.name)}</div>`+trow("var(--s1)","Deposit fee %",pct(x.d,2))+trow(null,"Deposit fee",moneyFull(x.a.fees))+trow("var(--s2)","Withdrawal fee %",pct(x.w,2))+trow(null,"Withdrawal fee",moneyFull(x.a.wfees)),ev.clientX,ev.clientY));row.addEventListener("mouseleave",hideTip)});
+}
+
+/* ---------- WALLETS ---------- */
+function renderWallets(){
+  const ws=WALLETS.filter(w=>S.sel.has(w.psp));
+  const tot=ws.reduce((s,w)=>s+walletUSD(w),0),low=ws.filter(w=>walletStatus(w)==="crit").length;
+  const st=SETTLE.filter(s=>S.sel.has(s.psp)),pend=st.reduce((s,x)=>s+x.amt*(FX[x.cur]||0),0),over=st.filter(s=>s.age>=3);
+  $("#wkpis").innerHTML=[["Total wallet balance",money(tot),ws.length+" PSP wallets, USD equivalent"],["Wallets below minimum",String(low),low?"Top-up needed before payouts":"All above floor"],["Pending settlements",money(pend),st.length+" settlements in transit"],["Overdue settlements",money(over.reduce((s,x)=>s+x.amt*(FX[x.cur]||0),0)),over.length+" past 3 days"]].map(x=>`<div class="kpi"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="d">${x[2]}</div></div>`).join("");
+  $("#wallets").innerHTML=ws.map(w=>{const p=pById(w.psp),stt=walletStatus(w);const lbl={good:"Healthy",warn:"Near minimum",crit:"Below minimum"}[stt];
+    return `<div class="panel wcard"><div class="top2"><div><div class="namecell"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</div><div class="mutedtxt">${esc(p.type)}</div></div>${pill(stt,lbl)}</div><div class="tot">${money(walletUSD(w))}</div>`+
+    w.cur.map(c=>{const mx=Math.max(c[1],c[2])*1.35;const r=c[1]/c[2];return `<div class="cur" title="${native(c[1],c[0])} · minimum ${native(c[2],c[0])}"><span class="ccode">${c[0]}</span><div class="meter"><b style="width:${c[1]/mx*100}%;background:${r<1?"var(--crit)":"var(--s1)"}"></b><em style="left:${c[2]/mx*100}%"></em></div><span class="num">${native(c[1],"").trim()}</span></div>`}).join("")+`</div>`}).join("");
+  $("#settleTable").innerHTML=`<thead><tr><th>PSP</th><th>Reference</th><th class="r">Amount</th><th class="r">USD equiv.</th><th>Expected</th><th>Status</th></tr></thead><tbody>`+st.slice().sort((a,b)=>b.age-a.age).map(s=>{const p=pById(s.psp),ss=settleStatus(s);return `<tr><td><div class="namecell"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</div></td><td class="num">${s.ref}</td><td class="r num">${native(s.amt,s.cur)}</td><td class="r num">${money(s.amt*FX[s.cur])}</td><td class="num">${s.exp}</td><td>${pill(ss[0],ss[1])}</td></tr>`}).join("")+`</tbody>`;
+}
+
+/* ---------- RECON ---------- */
+const EXPLAIN={
+ "Amount mismatch":b=>`PSP credited ${native(b.pspAmt,"USD")} against ${native(b.crm,"USD")} in the CRM. The gap is close to ${pById(b.psp).name}'s ${pct(pById(b.psp).fee,1)} fee, so the CRM probably booked the gross amount while the PSP reports net. Suggested fix: book the fee line in the CRM, or switch this PSP's mapping to gross.`,
+ "FX difference":b=>`Variance is ${pct(Math.abs(breakVar(b))/b.crm,2)}, inside a typical FX spread. The PSP converted at its own rate at settlement time. Suggested fix: use the PSP's settlement rate for this currency, or widen the FX tolerance for ${pById(b.psp).name}.`,
+ "Missing in PSP":b=>`The CRM shows a ${b.ago<=2?"recent":"completed"} deposit for client ${b.client}, but no matching PSP record. ${b.ago<=2?"It may still be pending at the PSP. Recheck after the next sync.":"Ask the PSP for the transaction status and check whether the client was credited without receiving funds."}`,
+ "Missing in CRM":b=>`${pById(b.psp).name} received ${native(b.pspAmt,"USD")} (ref ${b.txn}) but no CRM deposit exists. The client may have used the wrong reference, or the CRM callback failed. Suggested fix: match the payer name to a client and credit manually after approval.`,
+ "Duplicate in CRM":b=>`One PSP transaction (${b.txn}) is matched by two CRM deposits of ${native(b.crm,"USD")} for ${b.client}. This usually comes from a double callback. Suggested fix: reverse the duplicate CRM credit after checking the client's balance.`
+};
+function renderRecon(){
+  const vb=visibleBreaks(),open=vb.filter(b=>b.status!=="Resolved");
+  const {from,to}=idx();const ids=selIds();const totalTx=agg(ids,from,to).cnt;
+  $("#breakCnt").textContent=BREAKS.filter(b=>b.status!=="Resolved"&&S.sel.has(b.psp)).length;
+  $("#rkpis").innerHTML=[["Match rate",pct(1-open.length/Math.max(1,totalTx),2),totalTx.toLocaleString()+" CRM transactions checked"],["Open breaks",String(open.length),open.filter(b=>b.status==="Investigating").length+" under investigation"],["Open variance",money(open.reduce((s,b)=>s+Math.abs(breakVar(b)),0)),"Absolute, USD"],["Resolved",String(vb.filter(b=>b.status==="Resolved").length),"In the selected period"]].map(x=>`<div class="kpi"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="d">${x[2]}</div></div>`).join("");
+  const br=ids.map(id=>{const p=pById(id);const n=open.filter(b=>b.psp===id).length;return{name:p.name,c:p.color,v:n}}).sort((a,b)=>b.v-a.v);
+  hbars($("#breakBars"),br,v=>String(v),{single:"var(--s2)",label:"Open breaks"});
+  $("#breakSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.s===S.bfilter));
+  const list=vb.filter(b=>S.bfilter==="all"?true:S.bfilter==="open"?b.status==="Open":b.status===S.bfilter);
+  const lv={Open:"crit",Investigating:"warn",Resolved:"good"};
+  $("#breakTable").innerHTML=`<thead><tr><th>Break</th><th>PSP</th><th>Type</th><th>Client</th><th class="r">CRM</th><th class="r">PSP</th><th class="r">Variance</th><th>Status</th><th></th></tr></thead><tbody>`+(list.map(b=>{const p=pById(b.psp),v=breakVar(b);return `<tr><td><div class="num">${b.id}</div><div class="mutedtxt">${fmtDY(b.date)} · ${b.ago}d old</div></td><td><div class="namecell"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</div></td><td>${b.type}</td><td><div>${esc(b.cname)}</div><div class="mutedtxt num">${b.client}</div></td><td class="r num">${b.crm==null?"—":"$"+b.crm.toLocaleString("en-US",{minimumFractionDigits:2})}</td><td class="r num">${b.pspAmt==null?"—":"$"+b.pspAmt.toLocaleString("en-US",{minimumFractionDigits:2})}</td><td class="r num">${"$"+Math.abs(v).toLocaleString("en-US",{minimumFractionDigits:2})}</td><td>${pill(lv[b.status],b.status)}</td><td><div style="display:flex;gap:6px"><button class="btn small" data-x="${b.id}" type="button">${S.expanded===b.id?"Hide":"Details"}</button>${b.status!=="Resolved"?`<button class="btn small" data-res="${b.id}" type="button">Resolve</button>`:""}</div></td></tr>`+(S.expanded===b.id?`<tr class="expl"><td colspan="9"><div class="ai"><div><b>Likely cause · ${b.type}</b><br>${esc(EXPLAIN[b.type](b))}</div></div></td></tr>`:"")}).join("")||`<tr><td colspan="9" class="mutedtxt" style="padding:18px 10px">No breaks with this status for the selected PSPs and period.</td></tr>`)+`</tbody>`;
+  renderDaily();
+}
+$("#breakSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;S.bfilter=b.dataset.s;renderRecon()});
+$("#breakTable").addEventListener("click",e=>{const x=e.target.closest("[data-x]"),r=e.target.closest("[data-res]");if(x){S.expanded=S.expanded===x.dataset.x?null:x.dataset.x;renderRecon()}if(r){const b=BREAKS.find(q=>q.id===r.dataset.res);if(LIVE)fetch(LIVE.base+"/api/breaks/"+encodeURIComponent(b.id)+"/resolve",{method:"POST"}).then(x=>{if(!x.ok)toast("Server did not save "+b.id)},()=>toast("Server did not save "+b.id));b.status="Resolved";toast(b.id+" marked resolved");renderRecon();renderOverview()}});
+
+/* ---------- DAILY RECON REPORT ---------- */
+function dayRecon(di,ids){
+  const rows=ids.map(id=>{const p=pById(id),r=daily[PSPS.indexOf(p)][di],bs=BREAKS.filter(b=>b.psp===id&&b.di===di);
+    const cnt=t=>bs.filter(b=>b.type===t).length;
+    let crmCnt=r.cnt,pspCnt=r.cnt-cnt("Missing in PSP")-cnt("Duplicate in CRM")+cnt("Missing in CRM");
+    let crmAmt=r.dep,pspAmt=r.dep-bs.reduce((s,b)=>s+(b.crm||0)-(b.pspAmt||0),0);
+    let matched=r.cnt-bs.filter(b=>b.crm!=null).length,variance=bs.reduce((s,b)=>s+Math.abs(breakVar(b)),0);
+    if(LIVE&&LIVE.recon){const q=LIVE.recon[PSPS.indexOf(p)][di];crmCnt=q.crmCnt;crmAmt=q.crmAmt;pspCnt=q.pspCnt;pspAmt=q.pspAmt;matched=q.matched}
+    return{p,crmCnt,crmAmt,pspCnt,pspAmt,matched,breaks:bs.length,open:bs.filter(b=>b.status!=="Resolved").length,variance,rate:matched/Math.max(1,crmCnt),bs}});
+  const t=rows.reduce((a,r)=>({crmCnt:a.crmCnt+r.crmCnt,crmAmt:a.crmAmt+r.crmAmt,pspCnt:a.pspCnt+r.pspCnt,pspAmt:a.pspAmt+r.pspAmt,matched:a.matched+r.matched,breaks:a.breaks+r.breaks,open:a.open+r.open,variance:a.variance+r.variance}),{crmCnt:0,crmAmt:0,pspCnt:0,pspAmt:0,matched:0,breaks:0,open:0,variance:0});
+  t.rate=t.matched/Math.max(1,t.crmCnt);
+  return{rows,total:t,breaks:rows.flatMap(r=>r.bs)};
+}
+const rateLv=r=>r>=.999?"good":r>=.995?"warn":"crit";
+const usd2=v=>"$"+v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+function renderDaily(){
+  const el=$("#dDay");el.min=FIRST;el.max=LAST;if(!validIso(S.day))S.day=S.to;el.value=S.day;
+  const di=dIdx(S.day),d=dayRecon(di,selIds());
+  const row=(name,r,cls)=>`<tr class="${cls||""}"><td>${name}</td><td class="r num">${r.crmCnt.toLocaleString()}</td><td class="r num">${usd2(r.crmAmt)}</td><td class="r num">${r.pspCnt.toLocaleString()}</td><td class="r num">${usd2(r.pspAmt)}</td><td class="r num">${r.matched.toLocaleString()}</td><td class="r num">${r.breaks}${r.open?` <span class="mutedtxt">(${r.open} open)</span>`:""}</td><td class="r num">${usd2(r.variance)}</td><td class="r">${pill(rateLv(r.rate),pct(r.rate,2))}</td></tr>`;
+  $("#dayTable").innerHTML=`<thead><tr><th>PSP · ${fmtDY(dates[di])}</th><th class="r">CRM txns</th><th class="r">CRM amount</th><th class="r">PSP txns</th><th class="r">PSP amount</th><th class="r">Matched</th><th class="r">Breaks</th><th class="r">Variance</th><th class="r">Match rate</th></tr></thead><tbody>`+
+    d.rows.map(r=>row(`<div class="namecell"><span class="dot" style="background:${r.p.color}"></span>${esc(r.p.name)}</div>`,r)).join("")+row("All selected PSPs",d.total,"tot")+`</tbody>`;
+}
+$("#dDay").addEventListener("change",e=>{if(validIso(e.target.value)){S.day=e.target.value<FIRST?FIRST:e.target.value>LAST?LAST:e.target.value;renderDaily()}});
+
+/* report files */
+const SUMH=["Date","PSP","CRM transactions","CRM amount (USD)","PSP transactions","PSP amount (USD)","Matched","Breaks","Open breaks","Variance (USD)","Match rate"];
+const BRKH=["Break ID","Date","PSP","Type","Client ID","Client","CRM amount (USD)","PSP amount (USD)","Variance (USD)","Status","Likely cause"];
+const r2=v=>Math.round(v*100)/100;
+const sumRow=(date,name,r)=>[date,name,r.crmCnt,r2(r.crmAmt),r.pspCnt,r2(r.pspAmt),r.matched,r.breaks,r.open,r2(r.variance),+(r.rate*100).toFixed(2)+"%"];
+const brkRow=b=>[b.id,iso(b.date),pById(b.psp).name,b.type,b.client,b.cname,b.crm==null?"":b.crm,b.pspAmt==null?"":b.pspAmt,r2(Math.abs(breakVar(b))),b.status,EXPLAIN[b.type](b)];
+function daySheets(di){const d=dayRecon(di,selIds()),ds=iso(dates[di]);
+  return{summary:[...d.rows.map(r=>sumRow(ds,r.p.name,r)),sumRow(ds,"All selected PSPs",d.total)],breaks:d.breaks.map(brkRow)}}
+const header=title=>[[title],["Generated",new Date().toISOString().replace("T"," ").slice(0,16)+" UTC"],["PSPs",PSPS.filter(p=>S.sel.has(p.id)).map(p=>p.name).join(", ")],["Data",LIVE?"Live (generated "+LIVE.generated_at.slice(0,16).replace("T"," ")+" UTC)":"Sample data"],[]];
+function sheet(rows,widths){const ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=widths.map(w=>({wch:w}));return ws}
+let DL=null;
+async function save(filename,data){
+  if(!DL){toast("Downloads aren't available in this view");return}
+  try{await DL.save({filename,data});toast("Saved "+filename)}
+  catch(e){const c=e&&e.code;toast(c==="declined"?"Download cancelled":c==="rate_limited"?"A save prompt is already open":"Couldn't save the file"+(e&&e.message?": "+e.message:""))}
+}
+function xlsxReady(){if(typeof XLSX==="undefined"){toast("The Excel library didn't load. Try the CSV download.");return false}return true}
+$("#dlDayXlsx").addEventListener("click",()=>{if(!xlsxReady())return;const di=dIdx(S.day),ds=iso(dates[di]),x=daySheets(di);const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,sheet([...header("Daily reconciliation report · "+ds),SUMH,...x.summary],[12,22,16,18,16,18,10,8,11,15,11]),"Summary");
+  XLSX.utils.book_append_sheet(wb,sheet([BRKH,...x.breaks],[11,12,20,17,12,12,16,16,14,13,90]),"Breaks");
+  save(`reconciliation_${ds}.xlsx`,new Uint8Array(XLSX.write(wb,{bookType:"xlsx",type:"array"})))});
+const csvCell=v=>{v=String(v??"");return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+const csv=rows=>rows.map(r=>r.map(csvCell).join(",")).join("\r\n");
+$("#dlDayCsv").addEventListener("click",()=>{const di=dIdx(S.day),ds=iso(dates[di]),x=daySheets(di);
+  save(`reconciliation_${ds}.csv`,"﻿"+csv([...header("Daily reconciliation report · "+ds),SUMH,...x.summary,[],["Breaks"],BRKH,...x.breaks]))});
+$("#dlPeriod").addEventListener("click",()=>{if(!xlsxReady())return;const {from,to}=idx(),ids=selIds(),sum=[],tot=[];
+  for(let i=from;i<=to;i++){const d=dayRecon(i,ids),ds=iso(dates[i]);tot.push(sumRow(ds,"All selected PSPs",d.total));d.rows.forEach(r=>sum.push(sumRow(ds,r.p.name,r)))}
+  const brks=visibleBreaks().slice().sort((a,b)=>a.di-b.di).map(brkRow);const wb=XLSX.utils.book_new(),title=`Reconciliation by day · ${S.from} to ${S.to}`;
+  XLSX.utils.book_append_sheet(wb,sheet([...header(title),SUMH,...tot],[12,22,16,18,16,18,10,8,11,15,11]),"Daily totals");
+  XLSX.utils.book_append_sheet(wb,sheet([SUMH,...sum],[12,22,16,18,16,18,10,8,11,15,11]),"Daily by PSP");
+  XLSX.utils.book_append_sheet(wb,sheet([BRKH,...brks],[11,12,20,17,12,12,16,16,14,13,90]),"Breaks");
+  save(`reconciliation_${S.from}_to_${S.to}.xlsx`,new Uint8Array(XLSX.write(wb,{bookType:"xlsx",type:"array"})))});
+function setDlState(){const off=!DL;["dlDayXlsx","dlDayCsv","dlPeriod"].forEach(id=>$("#"+id).disabled=off);
+  $("#dlNote").textContent=off?"Downloads aren't available in this view. Open the page on claude.ai to save reports.":"Day files include a summary by PSP and every break with its likely cause. The period file has one row per day.";}
+setDlState();
+(async()=>{try{DL=window.claude&&window.claude.use?await window.claude.use("downloads"):null}catch(e){DL=null}setDlState()})();
+
+/* ---------- CONNECTIONS ---------- */
+function renderConn(){
+  $("#connTable").innerHTML=`<thead><tr><th>Platform</th><th>Type</th><th>Method</th><th>Schedule</th><th>Last sync</th><th class="r">Records (24h)</th><th>Status</th><th></th></tr></thead><tbody>`+CONNS.map((c,i)=>{const st=connStatus(c);const p=c.pspId&&pById(c.pspId);return `<tr><td><div class="namecell"><span class="dot" style="background:${p?p.color:"var(--ink-2)"}"></span>${esc(c.name)}</div></td><td>${esc(c.cat)}</td><td>${esc(c.method)}</td><td>${esc(c.freq)}</td><td>${c.testing?"—":ago(c.last)}</td><td class="r num">${c.rec.toLocaleString()}</td><td>${pill(st[0],st[1])}</td><td><button class="btn small" data-sync="${i}" type="button">${c.method==="CSV upload"?"Upload file":"Sync now"}</button></td></tr>`}).join("")+`</tbody>`;
+}
+$("#connTable").addEventListener("click",e=>{const b=e.target.closest("[data-sync]");if(!b)return;const c=CONNS[+b.dataset.sync];if(LIVE){toast("Syncs run on the server schedule (sync/run_sync.py)");return}c.testing=true;renderConn();setTimeout(()=>{c.testing=false;c.last=0;c.rec+=Math.round(40+Math.random()*300);renderConn();renderOverview();toast(c.name+" synced")},1200)});
+const STD=[["txn_id","transaction_id"],["client_id","merchant_customer_ref"],["type","txn_type"],["amount","amount"],["currency","currency"],["fee","fee_amount"],["status","status"],["created_at","created_time"]];
+function renderCreds(){
+  const m=$("#cfMethod").value,el=$("#cfCreds");
+  if(m==="api") el.innerHTML=`<label class="f">API base URL<input id="cfUrl" placeholder="https://api.provider.com/v1"></label><label class="f">API key (read-only)<input id="cfKey" type="password" placeholder="••••••••••••"></label>`;
+  if(m==="webhook") el.innerHTML=`<div style="grid-column:1/-1;display:grid;gap:6px"><span class="mutedtxt">Give this address to the provider. Each deposit or withdrawal is pushed here as it happens.</span><div class="copyline"><code id="whUrl">https://hooks.ops-hub.example/in/psp-${Math.random().toString(36).slice(2,8)}</code><button class="btn small" type="button" id="whCopy">Copy</button></div></div><label class="f">Signing secret<input id="cfSecret" type="password" placeholder="Provided by the PSP"></label>`;
+  if(m==="sftp") el.innerHTML=`<label class="f">SFTP host<input id="cfHost" placeholder="sftp.provider.com"></label><label class="f">Username<input id="cfUser" placeholder="ops_reports"></label>`;
+  if(m==="csv") el.innerHTML=`<label class="f" style="grid-column:1/-1">Sample report file (.csv)<input id="cfFile" type="file" accept=".csv,text/csv"></label><span class="mutedtxt" id="cfFileInfo" style="grid-column:1/-1">Upload one export so the columns can be mapped. Later files can be dropped into a shared folder.</span>`;
+  const cp=$("#whCopy");if(cp)cp.addEventListener("click",()=>{const t=$("#whUrl").textContent;navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>toast("Webhook address copied"),()=>{const r=document.createRange();r.selectNodeContents($("#whUrl"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("Press Ctrl/Cmd+C to copy")})});
+  const f=$("#cfFile");if(f)f.addEventListener("change",()=>{const file=f.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{const lines=String(rd.result).split(/\r?\n/).filter(Boolean);const head=(lines[0]||"").split(",").map(s=>s.trim().replace(/^"|"$/g,""));$("#cfFileInfo").textContent=`${file.name}: ${Math.max(0,lines.length-1)} rows, ${head.length} columns detected. Mapping guessed below.`;const guess=std=>head.find(h=>h.toLowerCase().replace(/[^a-z]/g,"").includes(std.replace(/_/g,"").replace("txnid","id")))||"";document.querySelectorAll("#cfMap input").forEach((inp,i)=>{const g=guess(STD[i][0]);if(g)inp.value=g})};rd.readAsText(file.slice(0,200000))});
+  setStep(2);
+}
+function setStep(n){document.querySelectorAll("#steps span").forEach((s,i)=>s.classList.toggle("on",i<n))}
+$("#cfMap").innerHTML=STD.map(s=>`<span class="std">${s[0]}</span><span aria-hidden="true" class="mutedtxt">←</span><input id="map_${s[0]}" value="${s[1]}" aria-label="Source field for ${s[0]}">`).join("");
+$("#cfMethod").addEventListener("change",renderCreds);
+$("#cfMap").addEventListener("input",()=>setStep(3));
+$("#cfName").addEventListener("input",()=>setStep(Math.max(1,document.querySelectorAll("#steps span.on").length)));
+$("#connForm").addEventListener("submit",e=>{e.preventDefault();const name=$("#cfName").value.trim();if(!name){$("#cfName").focus();return}
+  const mth={api:"API",webhook:"Webhook",sftp:"SFTP",csv:"CSV upload"}[$("#cfMethod").value];const c={name,cat:$("#cfType").value,method:mth,freq:$("#cfFreq").value.replace("Every 15 minutes","Every 15 min").replace("Daily at 09:00","Daily 09:00"),last:0,rec:0,testing:true};
+  CONNS.push(c);setStep(4);renderConn();toast("Testing connection to "+name+"…");
+  setTimeout(()=>{c.testing=false;c.rec=Math.round(200+Math.random()*900);renderConn();toast(name+" connected · first sync complete");$("#connForm").reset();renderCreds();setStep(1)},1600)});
+
+/* ---------- toast ---------- */
+let tt;function toast(msg){let t=$(".toast");if(!t){t=document.createElement("div");t.className="toast";t.setAttribute("role","status");document.body.appendChild(t)}t.textContent=msg;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2400)}
+
+
+/* ---------- Screen board ---------- */
+let bTimer=null,bState=null;
+function klNow(){return new Date()}
+function dayFrac(){const p=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kuala_Lumpur",hour:"numeric",minute:"numeric",hour12:false}).formatToParts(new Date());const h=+p.find(x=>x.type==="hour").value,m=+p.find(x=>x.type==="minute").value;return Math.max(.08,(h*60+m)/1440)}
+function boardInit(){const n=NDAYS-1,f=dayFrac();bState={psp:PSPS.map((p,pi)=>{const r=daily[pi][n];return{dep:r.dep*f,wd:r.wd*f,cnt:r.cnt*f,att:r.att*f,sr:srOf(r)??1}})}}
+function boardTick(){bState.psp.forEach((s,i)=>{const p=PSPS[i],inc=p.base/1440*(0.4+Math.random()*1.4);s.dep+=inc;s.wd+=inc*(.55+Math.random()*.3);const c=inc/p.ticket;s.cnt+=c;s.att+=c/s.sr});renderBoard()}
+function renderBoard(){
+  $("#clock").textContent=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kuala_Lumpur",weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(new Date())+" MYT";
+  const t=bState.psp.reduce((a,s)=>({dep:a.dep+s.dep,wd:a.wd+s.wd,cnt:a.cnt+s.cnt,att:a.att+s.att}),{dep:0,wd:0,cnt:0,att:0});
+  const tiles=[["Net deposits today",money(t.dep-t.wd),"Deposits minus withdrawals"],["Deposits today",money(t.dep),Math.round(t.cnt).toLocaleString()+" transactions"],["Withdrawals today",money(t.wd),"Paid out to clients"],["Success rate today",pct(t.cnt/t.att),"All PSPs combined"]];
+  $("#btiles").innerHTML=tiles.map(x=>`<div class="bt"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="d">${x[2]}</div></div>`).join("");
+  $("#bpsp").innerHTML=PSPS.map((p,i)=>{const s=bState.psp[i],sr=s.att?s.cnt/s.att:1,w=WALLETS.find(x=>x.psp===p.id),ws=w?walletStatus(w):"good",cs=connStatus(CONNS[i]);const worst=[srLevel(sr),ws,cs[0]].includes("crit")?"crit":[srLevel(sr),ws,cs[0]].includes("warn")?"warn":"good";return `<div class="bp"><div class="n"><span class="dot" style="background:${p.color}"></span><span>${esc(p.name)}</span></div><div class="m"><span>${money(s.dep)}</span><span>${pct(sr)}</span></div>${pill(worst,{good:"Operating normally",warn:"Watch",crit:"Action needed"}[worst])}</div>`}).join("");
+  $("#balerts").innerHTML=computeAlerts().slice(0,5).map(a=>`<div class="balert">${pill(a.lv,lvLabel[a.lv])}<b>${esc(a.title)}</b><p>${esc(a.body)}</p></div>`).join("");
+}
+function openBoard(){boardInit();$("#board").hidden=false;renderBoard();bTimer=setInterval(boardTick,5000);clockT=setInterval(()=>{$("#clock").textContent=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kuala_Lumpur",weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(new Date())+" MYT"},1000)}
+let clockT=null;
+function closeBoard(){$("#board").hidden=true;clearInterval(bTimer);clearInterval(clockT);try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}}
+$("#btnBoard").addEventListener("click",openBoard);
+$("#bExit").addEventListener("click",closeBoard);
+$("#bFull").addEventListener("click",()=>{const el=$("#board");try{const r=el.requestFullscreen&&el.requestFullscreen();if(r&&r.catch)r.catch(()=>toast("Full screen isn't available here"))}catch(e){toast("Full screen isn't available here")}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#board").hidden)closeBoard()});
+
+/* ---------- render ---------- */
+function renderView(){hideTip();({overview:renderOverview,psp:renderPsp,wallets:renderWallets,recon:renderRecon,conn:renderConn})[S.tab]()}
+function renderAll(){renderFilters();renderTabs();renderRecon();renderView()}
+renderCreds();setStep(1);
+renderAll();
+let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(renderView,150)});
+})();
+</script>
+
+</body></html>
