@@ -21,7 +21,7 @@ korapay,Kora Pay,Africa,GH;KE;NG;ZA;XAF;XOF,Bank / Mobile money / Card,public_do
 paystack,PayStack,Africa,NG,Card / Bank / Transfer,public_docs,https://paystack.com/docs/api/,paystack,Connector written (transactions + transfers + balance + settlements); need secret key to test
 lipad,Lipad,Africa,KE;TZ;UG,Mobile money (M-Pesa / Airtel),docs_received,https://developer.lipad.io/,lipad,Connector from official SDK: status query only; ask for list / balance / settlement API
 kuwa,Kuwa,Africa,,,docs_needed,,,
-paysnapper,Paysnapper,Africa,,,docs_needed,,,
+paysnapper,Paysnapper,Africa,,,docs_received,https://docs.paysnapper.xyz/,,Docs link received (has a sandbox Simulator); site blocked from dev env so connector not written yet
 tarspay,Tarspay,Mena;Latam,MX;BD,Bank SPEI,docs_needed,,,
 unitedpay,Unitedpay,Mena,EG,,docs_needed,,,
 payok,Payok,Mena;Latam,TR;IN;BR;CO,Papara / UPI / PIX,docs_needed,,,

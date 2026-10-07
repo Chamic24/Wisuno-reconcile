@@ -8,9 +8,9 @@
 | 状态 | 数量 | 说明 |
 |---|---|---|
 | ✅ 已写好连接器，等密钥测试 | 2 | PayStack、Lipad |
-| 📄 已有文档链接，连接器待写 | 2 | Pay247、Letknow Pay（文档站从开发环境访问被拦截，见下文） |
+| 📄 已有文档链接，连接器待写 | 3 | Pay247、Letknow Pay、Paysnapper（文档站从开发环境访问被拦截，见下文） |
 | 🌐 有公开文档，需要商户密钥 | 2 | Kora Pay、Trust Payments |
-| ❌ 没有文档，**需要去要 API** | 23 | 见下表 |
+| ❌ 没有文档，**需要去要 API** | 22 | 见下表 |
 
 ## 仪表盘需要每家 PSP 提供的 5 项能力
 
@@ -32,19 +32,20 @@
 | **Lipad** | 肯尼亚 / 坦桑 / 乌干达 | ❌ | ❌ | ❌ | ✅ checkout status | ⚠️ 有 callback_url，无签名说明 | 给 consumer key/secret；**向 Lipad 索取 1、2、3 和回调签名** |
 | **Pay247** | 东南亚 / 中东 | ? | ? | ? | ? | ? | 文档站被开发环境拦截，需放行或把文档导出给我 |
 | **Letknow Pay** | 加密货币 | ? | ? | ? | ? | ? | 同上 |
+| **Paysnapper** | 非洲 | ? | ? | ? | ? | ? | 同上；文档有 sandbox 模拟器（Simulator），拿到 sandbox 密钥就能自己造测试订单 |
 | Kora Pay | 加纳 / 肯尼亚 / 尼日利亚 / 南非 / 西非 / 中非 | 公开文档 | 公开文档 | 公开文档 | 公开文档 | 公开文档 | 需要 secret key 后写连接器 |
 | Trust Payments | 欧洲卡 | Webservices 查询 | – | 对账报表 | ✅ | ✅ | 需要 site reference + webservices 用户 |
 
 Lipad 的接口来自它在 PyPI / npm 上的官方 SDK 源码（`lipad-sdk` 1.0.5），因为 developer.lipad.io 也被拦了。
 Sandbox：`https://checkout.api.uat.lipad.io`；生产：`https://checkout.api.lipad.io`。
 
-## 需要去要 API 的 PSP（23 家）
+## 需要去要 API 的 PSP（22 家）
 
 | 地区 | PSP |
 |---|---|
 | 东南亚 | 5 Pay、OM Pay、Long77Pay (Payme)、Proxpay、Monetix、Acerpay |
 | 中国 | Payexchina、uEnjoy、Now Pay、ChipPay、Bipi Pay、Picotop、NEPay、MT Pay、IBit Pay、Ge-link |
-| 非洲 | Kuwa、Paysnapper |
+| 非洲 | Kuwa |
 | 中东 / 南亚 | Tarspay、Unitedpay、Payok、CheezeePay（表里标 pending） |
 | 拉美 | Starpago |
 

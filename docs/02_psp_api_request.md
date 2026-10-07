@@ -84,7 +84,7 @@ Thank you,
 | IBit Pay | | | | | |
 | Ge-link | | | | | |
 | Kuwa | | | | | |
-| Paysnapper | | | | | |
+| Paysnapper | | | ✅ | | 文档已收到，含模拟器 |
 | Tarspay | | | | | |
 | Unitedpay | | | | | |
 | Payok | | | | | |
